@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import UIKit
 
 final class Sync {
     static let shared = Sync()
