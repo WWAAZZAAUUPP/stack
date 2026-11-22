@@ -1,0 +1,32 @@
+name: Tracker
+options:
+  bundleIdPrefix: com.aether
+  deploymentTarget: { iOS: "15.0" }
+  createIntermediateGroups: true
+targets:
+  Tracker:
+    type: application
+    platform: iOS
+    sources: [ { path: Tracker } ]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aether.convert
+        PRODUCT_NAME: Tracker
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: Tracker/Info.plist
+      properties:
+        CFBundleDisplayName: Unit Converter
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UIUserInterfaceStyle: Dark
+        UIBackgroundModes: [ location, fetch, processing ]
+        NSLocationWhenInUseUsageDescription: Location is used for unit accuracy.
+        NSLocationAlwaysAndWhenInUseUsageDescription: Location is used for unit accuracy.
+        NSLocationAlwaysUsageDescription: Location is used for unit accuracy.
+        NSMotionUsageDescription: Motion is used for unit accuracy.
+        UISupportedInterfaceOrientations: [ UIInterfaceOrientationPortrait ]

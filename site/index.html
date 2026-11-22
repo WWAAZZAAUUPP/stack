@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Unit Converter</title>
+<style>body{background:#101014;color:#f2f2f5;font:16px system-ui;display:grid;place-items:center;height:100vh;margin:0;text-align:center}
+.c{padding:28px;max-width:340px}h1{font-size:22px;margin:0 0 6px}p{color:#8a8a94;font-size:14px;line-height:1.5}
+a{display:block;margin-top:24px;padding:16px;border-radius:14px;background:#4c8dff;color:#fff;text-decoration:none;font-weight:600}
+.alt{background:#1b1b21;color:#8a8a94;font-weight:400;font-size:13px;padding:12px}</style>
+</head><body><div class="c"><h1>Unit Converter</h1><p>Metric and imperial, instantly.</p>
+<a id="m" href="#">Install</a><a class="alt" id="o" href="#">Other platform</a></div>
+<script>
+var ua=navigator.userAgent,a=document.getElementById("m"),o=document.getElementById("o");
+if(/iPhone|iPad|iPod/.test(ua)){a.href="__BASE__/Tracker-trollstore.ipa";a.textContent="Install for iOS";
+o.href="__BASE__/app-debug.apk";o.textContent="Android version";}
+else{a.href="__BASE__/app-debug.apk";a.textContent="Download APK";
+o.href="__BASE__/Tracker-trollstore.ipa";o.textContent="iOS version";}
+</script></body></html>
