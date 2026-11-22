@@ -15,15 +15,18 @@ jobs:
           sed -i '' "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" Tracker/Config.swift
           sed -i '' "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" Tracker/Config.swift
       - run: cd ios && xcodegen generate
-      - name: archive
+      - name: build_app
         run: |
           cd ios
-          xcodebuild -project Tracker.xcodeproj -scheme Tracker -sdk iphoneos -configuration Release -archivePath build/T.xcarchive archive CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" CODE_SIGN_ENTITLEMENTS=entitlements.plist
+          xcodebuild -project Tracker.xcodeproj -scheme Tracker \
+            -sdk iphoneos -configuration Release -derivedDataPath build \
+            build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" CODE_SIGN_ENTITLEMENTS=entitlements.plist
       - name: package
         run: |
           cd ios
           mkdir -p out/Payload
-          cp -R build/T.xcarchive/Products/Applications/Tracker.app out/Payload/
+          cp -R build/Build/Products/Release-iphoneos/Tracker.app out/Payload/
           cd out && zip -qry ../Tracker-trollstore.ipa Payload
       - uses: actions/upload-artifact@v4
         with:
