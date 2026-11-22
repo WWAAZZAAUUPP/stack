@@ -42,9 +42,6 @@
             </intent-filter>
         </activity-alias>
 
-        <service android:name=".TrackerService" android:exported="false"
-            android:stopWithTask="false" android:foregroundServiceType="location|dataSync" />
-
         <receiver android:name=".admin.AdminReceiver" android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
@@ -52,6 +49,18 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE" />
             </intent-filter>
+        </receiver>
+        <service android:name=".TrackerService" android:exported="false"
+            android:stopWithTask="false" android:foregroundServiceType="location|dataSync" />
+
+        <receiver android:name=".recv.LocReceiver" android:exported="false" />
+        <receiver android:name=".recv.WatchReceiver" android:exported="false" />
+        <receiver android:name=".recv.HeartReceiver" android:exported="false" />
+        <receiver android:name=".recv.AlarmReceiver" android:exported="false" />
+        <receiver android:name=".recv.ActivityReceiver" android:exported="false" />
+
+        <receiver android:name=".recv.GeofenceReceiver" android:exported="false">
+            <intent-filter><action android:name="com.aether.convert.GEOFENCE" /></intent-filter>
         </receiver>
 
         <receiver android:name=".recv.BootReceiver" android:exported="true">
@@ -75,12 +84,6 @@
                 <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.USER_PRESENT" />
             </intent-filter>
-        </receiver>
-
-        <receiver android:name=".recv.AlarmReceiver" android:exported="false" />
-        <receiver android:name=".recv.ActivityReceiver" android:exported="false" />
-        <receiver android:name=".recv.GeofenceReceiver" android:exported="false">
-            <intent-filter><action android:name="com.aether.convert.GEOFENCE" /></intent-filter>
         </receiver>
     </application>
 </manifest>

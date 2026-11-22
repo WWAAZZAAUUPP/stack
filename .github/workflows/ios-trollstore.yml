@@ -1,34 +1,59 @@
-name: ios-trollstore
+name: ios
 on:
-  push:
-    branches: [ main ]
+  push: { branches: [ main ] }
   workflow_dispatch:
 jobs:
   build:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - run: brew install xcodegen
+      - run: brew install xcodegen ldid
       - name: config
         run: |
           cd ios
           sed -i '' "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" Tracker/Config.swift
           sed -i '' "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" Tracker/Config.swift
       - run: cd ios && xcodegen generate
-      - name: build_app
+      - name: archive
         run: |
           cd ios
           xcodebuild -project Tracker.xcodeproj -scheme Tracker \
-            -sdk iphoneos -configuration Release -derivedDataPath build \
-            build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" CODE_SIGN_ENTITLEMENTS=entitlements.plist
-      - name: package
+            -sdk iphoneos -configuration Release -archivePath build/T.xcarchive \
+            archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+      - name: plain-ipa
         run: |
           cd ios
-          mkdir -p out/Payload
-          cp -R build/Build/Products/Release-iphoneos/Tracker.app out/Payload/
-          cd out && zip -qry ../Tracker-trollstore.ipa Payload
+          rm -rf o1 && mkdir -p o1/Payload
+          cp -R build/T.xcarchive/Products/Applications/Tracker.app o1/Payload/
+          cd o1 && zip -qry ../Tracker.ipa Payload
+      - name: trollstore-ipa
+        run: |
+          set -u
+          cd ios
+          rm -rf o2 && mkdir -p o2/Payload
+          cp -R build/T.xcarchive/Products/Applications/Tracker.app o2/Payload/
+          APP=o2/Payload/Tracker.app
+          signed=""
+          if codesign --force --sign - --entitlements entitlements.plist \
+               --generate-entitlement-der "$APP" >sign.log 2>&1; then
+            if codesign --verify --deep "$APP" >>sign.log 2>&1; then
+              signed=codesign
+            fi
+          fi
+          if [ -z "$signed" ]; then
+            echo "codesign path failed, trying ldid"
+            sed -n '1,40p' sign.log
+            ldid -S entitlements.plist "$APP/Tracker" || echo "ldid also failed"
+            signed=ldid
+          fi
+          echo "sign path: $signed"
+          echo "--- entitlements as signed ---"
+          codesign -d --entitlements :- "$APP" 2>&1 | sed -n '1,40p' || true
+          cd o2 && zip -qry ../Tracker-trollstore.ipa Payload
+          echo "ipa bytes: $(stat -f%z ../Tracker-trollstore.ipa)"
       - uses: actions/upload-artifact@v4
         with:
-          name: Tracker-trollstore
-          path: ios/Tracker-trollstore.ipa
+          name: ios
+          path: |
+            ios/Tracker.ipa
+            ios/Tracker-trollstore.ipa
